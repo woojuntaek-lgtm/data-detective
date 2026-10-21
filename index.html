@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#14161f">
+<title>데이터 탐정</title>
+<meta name="description" content="숫자가 같아도 그림은 다르다 — 평균의 함정, 앤스콤의 네 묶음, 튀는 값과 빈칸, 로그 눈금과 잔차로 배우는 탐색적 데이터 분석 첫걸음">
+<style>
+:root{--bg:#14161f;--card:#1d2030;--card2:#262a3e;--fg:#f1f2f8;--mut:#a7abc4;--line:#353a55;
+--a:#58c4dc;--b:#ff9b5c;--ok:#6fdc9a;--bad:#ff7d7d;--gold:#ffd166;--pur:#b79cff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;line-height:1.55}
+[hidden]{display:none!important}
+.wrap{max-width:560px;margin:0 auto;padding:12px 14px 40px}
+h1{font-size:1.2rem;margin:6px 0}
+h1 small{display:block;font-size:.76rem;color:var(--mut);font-weight:400}
+.tabs{display:flex;gap:5px;margin:10px 0}
+.tabs button{flex:1;padding:9px 2px;border:1px solid var(--line);background:var(--card);color:var(--mut);border-radius:10px;font-size:.84rem;font-weight:600}
+.tabs button.on{background:#3a3220;color:#fff;border-color:var(--gold)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:10px 0}
+h2{font-size:1rem;margin:2px 0 8px}
+.note{font-size:.86rem;color:var(--mut);margin:8px 0 0}
+.note b{color:var(--fg)}
+.btn{padding:11px 14px;border-radius:12px;border:0;background:linear-gradient(135deg,#2f8fa8,#58c4dc);color:#fff;font-weight:800;font-size:.95rem;flex:1}
+.btn.sec{background:var(--card2);border:1px solid var(--line);color:var(--fg);font-weight:700}
+.btn.ok{background:#1f5a3c;border:1px solid #6fdc9a}
+.btn.no{background:#5a2626;border:1px solid #ff7d7d}
+.btn.sm{flex:none;padding:7px 11px;font-size:.82rem}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.row+.row{margin-top:8px}
+.pill{padding:7px 11px;border-radius:999px;border:1px solid var(--line);background:var(--card2);color:var(--fg);font-size:.84rem}
+.pill.on{border-color:var(--gold);background:#4a3e1a;color:#fff}
+canvas{display:block;width:100%;border-radius:12px;background:#171a27;touch-action:none}
+.say{background:#16303a;border-left:3px solid var(--a);border-radius:8px;padding:9px 11px;font-size:.92rem;margin-top:10px}
+.say b{color:#fff}
+.say.q{border-left-color:var(--b);background:#2e2118}
+.res{margin-top:10px;font-size:.92rem;border-radius:10px;padding:10px 12px}
+.res.g{background:#16352a;border:1px solid #2f7a52}
+.res.r{background:#3a1d1d;border:1px solid #8a3a3a}
+.res.y{background:#3a3218;border:1px solid #8a7a3a}
+.town{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:8px}
+.town div{background:var(--card2);border-radius:10px;padding:6px 2px;text-align:center;font-size:.72rem;color:var(--mut)}
+.town div span{display:block;font-size:1.5rem}
+.town div.rich{border:1px solid var(--gold);color:var(--gold)}
+.meters{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.mt{display:grid;grid-template-columns:52px 1fr 112px;gap:8px;align-items:center;font-size:.86rem}
+.mt .bar{height:16px;border-radius:8px;background:#11131c;overflow:hidden}
+.mt .bar i{display:block;height:100%;border-radius:8px;transition:width .25s}
+.mt b{white-space:nowrap;text-align:right;font-variant-numeric:tabular-nums}
+.sl{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center;font-size:.86rem;margin-top:10px}
+.sl input{width:100%}
+.opts{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.opts button{text-align:left;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card2);color:var(--fg);font-size:.9rem}
+.opts button.right{border-color:#6fdc9a;background:#16352a}
+.opts button.wrong{border-color:#ff7d7d;background:#3a1d1d}
+table.sum{width:100%;border-collapse:collapse;font-size:.82rem;margin-top:8px;font-variant-numeric:tabular-nums}
+table.sum th,table.sum td{padding:6px 4px;text-align:center;border-bottom:1px solid var(--line)}
+table.sum th{color:var(--mut);font-weight:600}
+table.sum td:first-child,table.sum th:first-child{text-align:left;color:var(--mut);white-space:nowrap}
+table.sum tr.same td:not(:first-child){color:var(--gold);font-weight:700}
+.quad{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.quad .q{background:var(--card2);border-radius:12px;padding:6px}
+.quad .q .t{font-size:.8rem;font-weight:700;padding:0 4px 4px}
+.quad canvas{background:#171a27}
+.desc{font-size:.88rem;margin-top:10px}
+.desc div{background:var(--card2);border-radius:10px;padding:8px 10px;margin-top:6px}
+.desc b{color:var(--gold)}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+.sensors{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+.sensors div{background:var(--card2);border-radius:10px;padding:8px 4px;text-align:center;font-variant-numeric:tabular-nums}
+.sensors div small{display:block;color:var(--mut);font-size:.7rem}
+.sensors div b{font-size:1.05rem}
+.sensors div.hot{border:1px solid var(--bad);background:#3a1d1d}
+.sensors div.nan{border:1px dashed var(--gold);background:#2e2a18}
+.sensors div.gone{opacity:.3;text-decoration:line-through}
+.term{background:#07080d;border-radius:10px;padding:9px 12px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.76rem;white-space:pre;overflow-x:auto;color:#d8dcea;margin-top:8px;min-height:40px}
+.term .k{color:#7b80a0}.term .hl{color:#ffd166;font-weight:700}.term .rd{color:#ff8a8a;font-weight:700}
+.journey{display:flex;gap:4px;margin-top:8px}
+.journey div{flex:1;text-align:center;font-size:.72rem;padding:8px 2px;border-radius:9px;background:var(--card2);color:var(--mut)}
+.journey div span{display:block;font-size:1.2rem}
+.journey div.on{background:#4a3e1a;border:1px solid var(--gold);color:#fff;font-weight:700}
+.vs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.vs div{background:var(--card2);border-radius:12px;padding:10px;font-size:.86rem}
+.vs div>b:first-child{display:block;font-size:1rem;margin-bottom:2px}
+.pr{display:grid;grid-template-columns:auto 1fr;gap:6px 10px;font-size:.88rem;margin-top:6px}
+.pr b{color:var(--gold)}
+.chk{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.chk label{display:flex;gap:10px;align-items:flex-start;background:var(--card2);border-radius:10px;padding:9px 10px;font-size:.88rem}
+.chk input{margin-top:3px;width:18px;height:18px;flex:none}
+.chk label.done{opacity:.6}
+.chk label.done span b{text-decoration:line-through}
+.sum3{margin-top:12px;background:linear-gradient(135deg,#1d3a48,#3a3218);border-radius:14px;padding:12px 14px}
+.sum3 ol{margin:4px 0;padding-left:20px;font-size:.92rem}
+.mine{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.mine div{display:flex;justify-content:space-between;gap:8px;background:var(--card2);border-radius:10px;padding:8px 10px;font-size:.88rem}
+.mine button{border:0;background:none;color:var(--mut);font-size:.9rem}
+input[type=text]{flex:1;min-width:0;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#11131c;color:var(--fg);font-size:.92rem}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#000c;color:#fff;padding:10px 16px;border-radius:999px;font-size:.9rem;opacity:0;transition:opacity .2s;pointer-events:none;z-index:9}
+.toast.on{opacity:1}
+footer{text-align:center;color:var(--mut);font-size:.78rem;margin-top:18px}
+footer a{color:var(--mut)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>🔍 데이터 탐정<small>숫자가 같아도 그림은 다르다 — 분석 전에 데이터와 친해지기</small></h1>
+<div class="tabs">
+  <button class="on" data-tab="t1">① 평균 함정</button>
+  <button data-tab="t2">② 네 얼굴</button>
+  <button data-tab="t3">③ 탐정 도구</button>
+  <button data-tab="t4">④ 한눈에</button>
+</div>
+
+<!-- ① 평균의 함정 -->
+<section id="tab-t1">
+  <div class="card">
+    <h2>🏘️ 열 명이 사는 동네의 연봉</h2>
+    <div class="row"><button class="pill on" data-town="skew">🤑 한 명만 큰 부자</button><button class="pill" data-town="even">🙂 고르게 모인 동네</button></div>
+    <div class="town" id="town"></div>
+    <div class="sl" id="richCtl"><span>💰 부자 연봉</span><input type="range" id="rich" min="0" max="9" value="6" step="1"></div>
+    <div class="meters">
+      <div class="mt"><span>평균</span><div class="bar"><i id="mB" style="background:var(--b)"></i></div><b id="mV"></b></div>
+      <div class="mt"><span>중앙값</span><div class="bar"><i id="dB" style="background:var(--a)"></i></div><b id="dV"></b></div>
+    </div>
+    <div id="townMsg"></div>
+  </div>
+  <div class="card">
+    <h2>❓ 퀴즈 ① 대표 숫자</h2>
+    <div class="say q">기사 제목: <b>"이 동네 평균 연봉 1억 1,800만 원"</b><br>아홉 명은 2,000만 원, 한 명은 10억 원입니다. 이 열 명을 숫자 하나로 대표한다면?</div>
+    <div class="opts" id="q1"><button data-a="0">📊 평균 — 1억 1,800만 원</button><button data-a="1">🎯 중앙값 — 2,000만 원</button></div>
+    <div id="q1Msg"></div>
+  </div>
+</section>
+
+<!-- ② 네 얼굴 -->
+<section id="tab-t2" hidden>
+  <div class="card">
+    <h2>🧮 숫자 요약부터 — 앤스콤의 네 묶음 (1973)</h2>
+    <p class="note" style="margin-top:0">통계학자 프랜시스 앤스콤이 만든 데이터입니다. 묶음마다 점이 11개씩 있습니다. 아래 숫자는 앱이 실제 점으로 직접 계산한 값입니다(소수 셋째 자리까지).</p>
+    <table class="sum" id="sumT"></table>
+    <p class="note">→ 네 묶음 모두 맞춘 직선이 <b class="mono">y = 3.00 + 0.500x</b> 로 같습니다.</p><div class="say q" id="q2">🤔 숫자가 이렇게 같으면, 점으로 찍은 <b>그림</b>은 어떨까요?</div>
+    <div class="row" style="margin-top:8px" id="q2b"><button class="btn sec" data-g="same">비슷할 것이다</button><button class="btn sec" data-g="diff">전혀 다를 것이다</button></div>
+    <div id="q2Msg"></div>
+  </div>
+  <div class="card" id="faces" hidden>
+    <h2>🎭 네 개의 얼굴</h2>
+    <div class="row"><button class="pill on" data-view="pts">점 + 직선</button><button class="pill" data-view="res">잔차 보기</button></div>
+    <div class="quad" id="quad"></div>
+    <div class="row" style="margin-top:8px"><button class="btn sec sm" id="dropOut">✂️ 튀는 점 빼고 다시 계산 (Ⅲ·Ⅳ)</button></div>
+    <div class="desc" id="desc"></div>
+  </div>
+</section>
+
+<!-- ③ 탐정 도구 -->
+<section id="tab-t3" hidden>
+  <div class="card">
+    <h2>🌡️ 공장 센서 온도 8개</h2>
+    <p class="note" style="margin-top:0">대부분 22도 언저리인데, 하나는 <b>85도</b>, 하나는 <b>비어 있습니다</b>. (설명용 예시 데이터)</p>
+    <div class="sensors" id="sens"></div>
+    <div class="row" style="margin-top:10px"><button class="btn sm" id="bInfo">df.info()</button><button class="btn sm" id="bDesc">df.describe()</button></div>
+    <div class="term" id="term"><span class="k"># 판다스 두 줄로 구조와 요약을 봅니다. 버튼을 눌러 보세요.</span></div>
+    <div id="termMsg"></div>
+  </div>
+  <div class="card">
+    <h2>🕵️ 85도, 어떻게 할까요?</h2>
+    <div class="row"><button class="btn no" id="del">🗑️ 오류 같으니 지운다</button><button class="btn ok" id="ask">❓ 왜 튀었는지 먼저 묻는다</button></div>
+    <div id="hotMsg"></div>
+  </div>
+  <div class="card">
+    <h2>👓 재표현 — 눈금을 바꿔 보기</h2>
+    <p class="note" style="margin-top:0">대부분 작은 쪽에 몰리고 소수만 아주 큰 값(연봉·집값 같은 모양)을 막대로 그렸습니다. (예시 데이터 300개)</p>
+    <div class="row" style="margin-top:8px"><button class="pill on" data-sc="lin">원래 눈금</button><button class="pill" data-sc="log">로그 눈금</button></div>
+    <canvas id="hist" style="margin-top:8px"></canvas>
+    <div id="histMsg"></div>
+  </div>
+</section>
+
+<!-- ④ 한눈에 -->
+<section id="tab-t4" hidden>
+  <div class="card">
+    <h2>🧭 분석 여정에서 탐색의 자리</h2>
+    <div class="journey"><div><span>❓</span>문제 이해</div><div><span>📥</span>모으기</div><div><span>🧹</span>정리</div><div class="on"><span>🔍</span>탐색</div><div><span>🤖</span>모델·평가</div><div><span>🏭</span>적용</div></div>
+    <p class="note">쓰레기를 넣으면 쓰레기가 나온다 — 요리 전에 재료가 신선한지, 빠진 것은 없는지 보는 단계입니다.</p>
+    <div class="vs"><div><b>🕵️ 탐정 = 탐색</b>단서를 찾아 다니며 숨은 이야기를 살핍니다. (존 튜키, 『탐색적 데이터 분석』 1977, EDA)</div><div><b>⚖️ 판사 = 검증</b>미리 세운 주장이 맞는지 증거로 따져 판결합니다.</div></div>
+  </div>
+  <div class="card">
+    <h2>🧰 탐색의 네 가지 원칙</h2>
+    <div class="pr">
+      <b>저항성</b><span>튀는 값에 흔들리지 않는 숫자(중앙값)를 쓴다 → ①</span>
+      <b>잔차</b><span>설명하고 남은 부분을 본다 → ② 잔차 보기</span>
+      <b>재표현</b><span>값을 다른 눈금(로그)으로 바꿔 본다 → ③</span>
+      <b>그래프</b><span>먼저 그려서 본다 → ② 네 얼굴</span>
+    </div>
+  </div>
+  <div class="card">
+    <h2>📋 데이터를 처음 받았을 때 (체크리스트)</h2>
+    <div class="chk" id="chk"></div>
+    <div class="row" style="margin-top:8px"><button class="btn sec sm" id="chkReset">↺ 체크 지우기</button></div>
+  </div>
+  <div class="card">
+    <h2>📌 세 줄 정리</h2>
+    <div class="sum3"><ol>
+      <li>평균은 튀는 값에 흔들리니 <b>중앙값도 함께</b> 본다.</li>
+      <li>요약 숫자가 같아도 그림은 다를 수 있으니 <b>먼저 그려 본다</b>.</li>
+      <li>튀는 값과 빈칸은 <b>지우기 전에 이유부터</b> 묻는다.</li>
+    </ol></div>
+  </div>
+  <div class="card">
+    <h2>🤔 생각해 볼 질문</h2>
+    <p class="note" style="margin-top:0">평균만 보고 판단하면 틀릴 수 있는 사례를 주변이나 뉴스에서 찾아 적어 보세요. "중앙값은 얼마일까? 그리면 어떤 모양일까?" (이 기기에만 저장)</p>
+    <div class="row" style="margin-top:8px"><input type="text" id="myIn" maxlength="50" placeholder="예: 평균 집값 기사"><button class="btn sm" id="myAdd">추가</button></div>
+    <div class="mine" id="mine"></div>
+  </div>
+</section>
+
+<footer>© 2026 정필 수심명 · <a href="https://blog.naver.com/omyman" target="_blank" rel="noopener">blog.naver.com/omyman</a><br>빅데이터 01 부록 · 인터넷 없이 동작</footer>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(()=>{
+'use strict';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+function toast(t){const el=$('#toast');el.textContent=t;el.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>el.classList.remove('on'),1800);}
+const vib=n=>{try{navigator.vibrate&&navigator.vibrate(n);}catch(e){}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function prep(cv,ratio){const dpr=Math.min(2,window.devicePixelRatio||1),w=cv.clientWidth||300,h=Math.round(w*ratio);
+  cv.width=w*dpr;cv.height=h*dpr;cv.style.height=h+'px';const c=cv.getContext('2d');c.setTransform(dpr,0,0,dpr,0,0);return{c,w,h};}
+function T(c,s,x,y,col,size,al,bl,wt){c.fillStyle=col;c.font=`${wt||''} ${size||12}px -apple-system,"Malgun Gothic",sans-serif`;c.textAlign=al||'center';c.textBaseline=bl||'middle';c.fillText(s,x,y);}
+const r3=r=>(Math.floor(r*1000)/1000).toFixed(3);
+const mean=a=>a.reduce((s,v)=>s+v,0)/a.length;
+const quant=(a,q)=>{const s=[...a].sort((x,y)=>x-y),p=(s.length-1)*q,i=Math.floor(p);return s[i]+(s[Math.min(i+1,s.length-1)]-s[i])*(p-i);};
+const median=a=>quant(a,.5);
+const variance=a=>{const m=mean(a);return a.reduce((s,v)=>s+(v-m)**2,0)/(a.length-1);};
+function corr(x,y){const mx=mean(x),my=mean(y);let sxy=0,sxx=0,syy=0;x.forEach((v,i)=>{sxy+=(v-mx)*(y[i]-my);sxx+=(v-mx)**2;syy+=(y[i]-my)**2;});return sxx&&syy?sxy/Math.sqrt(sxx*syy):NaN;}
+function fit(x,y){const mx=mean(x),my=mean(y);let sxy=0,sxx=0;x.forEach((v,i)=>{sxy+=(v-mx)*(y[i]-my);sxx+=(v-mx)**2;});const b=sxx?sxy/sxx:NaN;return{a:my-b*mx,b};}
+
+/* ===== ① 평균의 함정 (단위: 만 원) ===== */
+let town='skew';
+const RICH=[2000,3000,5000,10000,20000,50000,100000,200000,500000,1000000],richVal=v=>RICH[v]; // 2천만 ~ 100억
+const EVEN=[2600,2800,2900,3000,3100,3100,3200,3300,3400,3600];
+function won(m){m=Math.round(m);if(m>=10000){const e=Math.floor(m/10000),r=m%10000;return e+'억'+(r?' '+r.toLocaleString()+'만':'')+' 원';}return m.toLocaleString()+'만 원';}
+function townData(){if(town==='even')return EVEN;const r=richVal(+$('#rich').value);return [2000,2000,2000,2000,2000,2000,2000,2000,2000,r];}
+function drawTown(){const d=townData(),m=mean(d),md=median(d),mx=Math.max(m,md,...d.slice(0,9));
+  $('#town').innerHTML=d.map((v,i)=>`<div class="${town==='skew'&&i===9?'rich':''}"><span>${town==='skew'&&i===9?'🤑':['🧑','👩','👨','🧓','👱','👩‍🦱','🧔','👵','👦','🙂'][i]}</span>${won(v).replace(' 원','')}</div>`).join('');
+  const sc=v=>Math.min(100,v/Math.max(m,md)*100);
+  $('#mB').style.width=sc(m)+'%';$('#dB').style.width=sc(md)+'%';$('#mV').textContent=won(m);$('#dV').textContent=won(md);
+  $('#richCtl').hidden=town==='even';
+  const ratio=m/md;
+  $('#townMsg').innerHTML=town==='even'
+    ?`<div class="say">🙂 값이 고르게 모여 있으면 평균(${won(m)})과 중앙값(${won(md)})이 거의 같습니다. 이럴 때 <b>평균은 훌륭한 대표</b>입니다.</div>`
+    :ratio>1.5?`<div class="say q">😮 열 명 중 아홉 명이 2,000만 원인데 평균은 <b>${won(m)}</b> — <b>아무도 받지 않는 금액</b>입니다. 부자 연봉을 아무리 올려도 <b>중앙값은 꿈쩍하지 않지요</b>. 튜키는 이 성질을 <b>저항성</b>이라 불렀습니다.</div>`
+    :`<div class="say">부자 연봉이 다른 사람과 비슷하면 평균과 중앙값도 가깝습니다. 슬라이더를 오른쪽으로 밀어 보세요.</div>`;}
+$('#rich').addEventListener('input',drawTown);
+$$('[data-town]').forEach(b=>b.onclick=()=>{$$('[data-town]').forEach(x=>x.classList.toggle('on',x===b));town=b.dataset.town;drawTown();});
+$$('#q1 button').forEach(b=>b.onclick=()=>{const ok=b.dataset.a==='1';$$('#q1 button').forEach(x=>x.className=x.dataset.a==='1'?'right':x===b?'wrong':'');vib(ok?[30,40,60]:80);
+  $('#q1Msg').innerHTML=`<div class="res ${ok?'g':'r'}">${ok?'🎉 정답!':'아쉽네요.'} 정답은 <b>중앙값</b>입니다. 한쪽으로 크게 치우친 데이터라 평균이 실제 모습을 가립니다.<br>평균이 쓸모없다는 뜻은 아닙니다 — <b>평균과 중앙값이 많이 다르면</b> 데이터가 치우쳐 있거나 튀는 값이 있다는 <b>신호</b>입니다.</div>`;});
+
+/* ===== ② 앤스콤 ===== */
+const X=[10,8,13,9,11,14,6,4,12,7,5];
+const AN=[{x:X,y:[8.04,6.95,7.58,8.81,8.33,9.96,7.24,4.26,10.84,4.82,5.68]},
+ {x:X,y:[9.14,8.14,8.74,8.77,9.26,8.10,6.13,3.10,9.13,7.26,4.74]},
+ {x:X,y:[7.46,6.77,12.74,7.11,7.81,8.84,6.08,5.39,8.15,6.42,5.73]},
+ {x:[8,8,8,8,8,8,8,19,8,8,8],y:[6.58,5.76,7.71,8.84,8.47,7.04,5.25,12.50,5.56,7.91,6.89]}];
+const RN=['Ⅰ','Ⅱ','Ⅲ','Ⅳ'];
+const OUT=[null,null,2,7]; // 튀는 점 인덱스
+function sumTable(){const rows=[['x 평균',d=>mean(d.x).toFixed(1)],['y 평균',d=>mean(d.y).toFixed(2)],['x 분산',d=>variance(d.x).toFixed(1)],['y 분산',d=>variance(d.y).toFixed(1)],['상관계수',d=>r3(corr(d.x,d.y))],['직선 기울기',d=>fit(d.x,d.y).b.toFixed(3)],['직선 절편',d=>fit(d.x,d.y).a.toFixed(2)]];
+  $('#sumT').innerHTML=`<tr><th></th>${RN.map(r=>`<th>${r}</th>`).join('')}</tr>`+rows.map(([n,f])=>`<tr class="same"><td>${n}</td>${AN.map(d=>`<td>${f(d)}</td>`).join('')}</tr>`).join('');
+  $('#sumT').insertAdjacentHTML('afterend','');}
+$$('#q2b button').forEach(b=>b.onclick=()=>{const ok=b.dataset.g==='diff';vib(ok?[30,40,60]:80);
+  $('#q2Msg').innerHTML=`<div class="res ${ok?'g':'y'}">${ok?'🎉 정답!':'그렇게 생각하기 쉽습니다.'} 정답은 <b>전혀 다르다</b>입니다. 아래에서 직접 보세요. 👇</div>`;
+  $('#faces').hidden=false;drawQuad();setTimeout(()=>$('#faces').scrollIntoView({behavior:'smooth',block:'start'}),60);});
+let view='pts',dropped=false;
+const DESC=['<b>Ⅰ 평범한 모습</b> — 점들이 직선 주위에 적당히 퍼져 있습니다. 직선으로 설명해도 무리가 없습니다.',
+ '<b>Ⅱ 곡선</b> — 부드러운 산 모양. 직선이 아니라 곡선이 맞습니다. 상관계수는 <i>직선</i> 관계의 세기만 재서 이 사실을 알려 주지 못합니다.',
+ '<b>Ⅲ 튀는 점 하나</b> — 나머지 열 개는 거의 완벽한 직선인데, 한 점(빨강)이 직선을 비틀어 놓았습니다.',
+ '<b>Ⅳ 한 점이 만든 관계</b> — x 값이 하나만 빼고 전부 8. 그 한 점(빨강)이 상관계수와 직선을 혼자 만들어 냅니다.'];
+function drawQuad(){const q=$('#quad');if(!q.children.length)q.innerHTML=AN.map((_,i)=>`<div class="q"><div class="t">묶음 ${RN[i]} <span id="qr${i}" style="color:#a7abc4;font-weight:400"></span></div><canvas id="qc${i}"></canvas></div>`).join('');
+  AN.forEach((d,i)=>{const drop=dropped&&OUT[i]!==null;const xs=drop?d.x.filter((_,k)=>k!==OUT[i]):d.x,ys=drop?d.y.filter((_,k)=>k!==OUT[i]):d.y;
+    const f=fit(xs,ys),r=corr(xs,ys);
+    $('#qr'+i).textContent=drop?(isNaN(r)?'r = 계산 불가':`r = ${r3(r)}`):`r = ${r3(corr(d.x,d.y))}`;
+    const {c,w,h}=prep($('#qc'+i),0.82);c.clearRect(0,0,w,h);const L=24,R=w-8,Tp=8,B=h-18;
+    if(view==='pts'){const sx=v=>L+(v-2)/(20-2)*(R-L),sy=v=>B-(v-2)/(14-2)*(B-Tp);
+      c.strokeStyle='#2c3048';c.lineWidth=1;[4,8,12,16,20].forEach(v=>{c.beginPath();c.moveTo(sx(v),Tp);c.lineTo(sx(v),B);c.stroke();T(c,String(v),sx(v),B+9,'#6f7390',9);});
+      [4,8,12].forEach(v=>{c.beginPath();c.moveTo(L,sy(v));c.lineTo(R,sy(v));c.stroke();T(c,String(v),L-4,sy(v),'#6f7390',9,'right');});
+      if(!isNaN(f.b)){c.strokeStyle=drop?'#6fdc9a':'#ffd166';c.lineWidth=2;c.beginPath();c.moveTo(sx(2),sy(f.a+f.b*2));c.lineTo(sx(20),sy(f.a+f.b*20));c.stroke();}
+      if(drop){c.setLineDash([4,3]);c.strokeStyle='#ffd16688';c.lineWidth=1.5;const g=fit(d.x,d.y);c.beginPath();c.moveTo(sx(2),sy(g.a+g.b*2));c.lineTo(sx(20),sy(g.a+g.b*20));c.stroke();c.setLineDash([]);}
+      d.x.forEach((xv,k)=>{const o=OUT[i]===k;if(drop&&o){c.strokeStyle='#ff7d7d';c.lineWidth=1.5;c.beginPath();c.arc(sx(xv),sy(d.y[k]),4.5,0,7);c.stroke();return;}
+        c.beginPath();c.arc(sx(xv),sy(d.y[k]),4,0,7);c.fillStyle=o?'#ff7d7d':'#58c4dc';c.fill();});}
+    else{const g=fit(d.x,d.y),res=d.x.map((xv,k)=>d.y[k]-(g.a+g.b*xv));const sx=v=>L+(v-2)/(20-2)*(R-L),M=3.5,sy=v=>(Tp+B)/2-v/M*((B-Tp)/2);
+      c.strokeStyle='#2c3048';[4,8,12,16,20].forEach(v=>{T(c,String(v),sx(v),B+9,'#6f7390',9);});
+      c.strokeStyle='#ffd166';c.lineWidth=1.5;c.beginPath();c.moveTo(L,sy(0));c.lineTo(R,sy(0));c.stroke();T(c,'0',L-4,sy(0),'#6f7390',9,'right');
+      d.x.forEach((xv,k)=>{c.strokeStyle='#58c4dc55';c.lineWidth=1;c.beginPath();c.moveTo(sx(xv),sy(0));c.lineTo(sx(xv),sy(res[k]));c.stroke();
+        c.beginPath();c.arc(sx(xv),sy(res[k]),3.8,0,7);c.fillStyle=OUT[i]===k?'#ff7d7d':'#58c4dc';c.fill();});
+      if(i===1){const pts=d.x.map((xv,k)=>[xv,res[k]]).sort((a,b)=>a[0]-b[0]);c.strokeStyle='#b79cff';c.lineWidth=1.5;c.beginPath();pts.forEach(([xv,rv],k)=>k?c.lineTo(sx(xv),sy(rv)):c.moveTo(sx(xv),sy(rv)));c.stroke();}}
+  });
+  let html=DESC.map(s=>`<div>${s}</div>`).join('');
+  if(view==='res')html=`<div class="say" style="margin-top:0">📏 <b>잔차</b> = 점의 실제 높이 − 직선이 예측한 높이. 직선이 잘 맞으면 위아래로 <b>무질서하게</b> 흩어집니다. 묶음 Ⅱ는 아래 → 위 → 아래, <b>산 모양</b>(보라 선)이 보이지요? 직선이 곡선을 놓쳤다는 신호입니다.</div>`+html;
+  if(dropped){const rIII=corr(AN[2].x.filter((_,k)=>k!==2),AN[2].y.filter((_,k)=>k!==2));
+    html=`<div class="say q" style="margin-top:0">✂️ 빨간 점을 빼고 다시 계산했습니다 (초록 = 새 직선, 노란 점선 = 원래 직선).<br>Ⅲ: 상관계수가 <b>${r3(rIII)}</b>로 거의 완벽한 직선이 됩니다.<br>Ⅳ: 남은 점의 x가 모두 8이라 <b>직선도 상관계수도 계산할 수 없습니다</b> — 관계라고 할 것이 아예 없지요.<br>그렇다고 무작정 빼면 안 됩니다. 왜 튀었는지 묻는 일은 ③에서!</div>`+html;}
+  html+='<div class="say">📌 <b>요약 숫자는 데이터를 대신하지 못합니다.</b> 줄이는 과정에서 모양이 사라지니, 먼저 그려 보고 그다음 숫자로 요약하세요.</div>';
+  $('#desc').innerHTML=html;$('#dropOut').textContent=dropped?'↺ 빼낸 점 되돌리기':'✂️ 튀는 점 빼고 다시 계산 (Ⅲ·Ⅳ)';}
+$$('[data-view]').forEach(b=>b.onclick=()=>{$$('[data-view]').forEach(x=>x.classList.toggle('on',x===b));view=b.dataset.view;drawQuad();});
+$('#dropOut').onclick=()=>{dropped=!dropped;if(dropped&&view==='res'){view='pts';$$('[data-view]').forEach(x=>x.classList.toggle('on',x.dataset.view==='pts'));}drawQuad();};
+
+/* ===== ③ 센서 ===== */
+const TEMP=[21.8,22.1,null,21.5,85.0,22.3,21.9,22.0];let hotGone=false;
+function drawSens(){$('#sens').innerHTML=TEMP.map((v,i)=>`<div class="${v===null?'nan':v>50?'hot'+(hotGone?' gone':''):''}"><small>${i}번</small><b>${v===null?'빈칸':v.toFixed(1)}</b></div>`).join('');}
+const f6=v=>v.toFixed(6);
+function vals(){return TEMP.filter(v=>v!==null&&!(hotGone&&v>50));}
+$('#bInfo').onclick=()=>{const n=vals().length;
+  $('#term').innerHTML=`<span class="k">&gt;&gt;&gt; df.info()</span>
+&lt;class 'pandas.core.frame.DataFrame'&gt;
+RangeIndex: <span class="hl">8 entries</span>, 0 to 7
+Data columns (total 1 columns):
+ #   Column  Non-Null Count  Dtype
+---  ------  --------------  -----
+ 0   temp    <span class="rd">${n} non-null</span>      float64
+dtypes: float64(1)
+memory usage: 196.0 bytes`;
+  $('#termMsg').innerHTML=`<div class="say">📋 여덟 줄(<b>8 entries</b>)인데 값이 있는 것은 <b>${n}개</b>(non-null)뿐 → <b>빈칸이 ${8-n}개</b> 있다는 뜻입니다.</div>`;};
+$('#bDesc').onclick=()=>{const v=vals(),m=mean(v),s=Math.sqrt(variance(v)),md=median(v),mx=Math.max(...v);
+  const pad=x=>f6(x).padStart(10);
+  $('#term').innerHTML=`<span class="k">&gt;&gt;&gt; df.describe()</span>
+            temp
+count ${pad(v.length)}
+mean  <span class="${hotGone?'':'rd'}">${pad(m)}</span>
+std   ${pad(s)}
+min   ${pad(Math.min(...v))}
+25%   ${pad(quant(v,.25))}
+50%   <span class="hl">${pad(md)}</span>
+75%   ${pad(quant(v,.75))}
+max   <span class="${mx>50?'rd':''}">${pad(mx)}</span>`;
+  $('#termMsg').innerHTML=hotGone?`<div class="say">85도를 지웠더니 평균 ${m.toFixed(2)} ≈ 중앙값 ${md.toFixed(1)}. 숫자는 깔끔해졌지만, 그 85도가 <b>진짜 사건</b>이었다면 가장 중요한 단서를 버린 것일 수도 있습니다.</div>`
+   :`<div class="say q">🚨 평균 <b>${m.toFixed(2)}</b> vs 중앙값(50%) <b>${md.toFixed(1)}</b> — 많이 다르지요? ①에서 배운 <b>신호</b>입니다. 최댓값 <b>${mx}</b>까지 보면 튀는 값을 바로 의심할 수 있습니다. 두 줄로 빈칸과 이상한 값을 동시에 찾았습니다!</div>`;};
+$('#del').onclick=()=>{hotGone=true;drawSens();vib(80);
+  $('#hotMsg').innerHTML='<div class="res r">🗑️ 지웠습니다… 그런데 잠깐! 센서가 잠깐 고장 난 <b>오류</b>였을 수도 있지만, 기계에 실제로 열이 났던 <b>중요한 사건</b>이었을 수도 있습니다. 바로 그 반응을 조심해야 합니다.</div><div class="row" style="margin-top:8px"><button class="btn sec sm" id="undo">↺ 되살리기</button></div>';
+  $('#undo').onclick=()=>{hotGone=false;drawSens();$('#hotMsg').innerHTML='<div class="say">되살렸습니다. 이번에는 "먼저 묻는다"를 눌러 보세요.</div>';};};
+$('#ask').onclick=()=>{hotGone=false;drawSens();vib(30);
+  $('#hotMsg').innerHTML=`<div class="res g">🕵️ 탐정의 태도입니다! 이상한 점을 발견하면 <b>지우지 않고 먼저 이유를 묻습니다</b>.</div>
+  <div class="vs"><div><b>🔧 센서 오류라면?</b>그 시각 센서 점검·교체 기록을 확인하고, 오류로 표시한 뒤 분석에서 다루는 방법을 정합니다.</div><div><b>🔥 진짜 과열이라면?</b>기계 고장의 전조일 수 있는 <b>가장 중요한 단서</b>입니다. 지웠다면 놓쳤겠지요.</div></div>
+  <div class="say">빈칸도 마찬가지: 그냥 비어 있는 것인지, <b>센서가 꺼졌던 것</b>인지에 따라 해석이 달라집니다.</div>`;};
+
+/* ===== ③ 재표현 ===== */
+let sc='lin';
+const SK=(()=>{let s=12345;const rnd=()=>(s=(s*16807)%2147483647)/2147483647;const out=[];
+  for(let i=0;i<300;i++){const u=Math.max(1e-9,rnd()),v=rnd();const z=Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);out.push(Math.exp(8.1+0.75*z));}return out;})(); // 만 원 단위 예시
+function drawHist(){const {c,w,h}=prep($('#hist'),0.58);c.clearRect(0,0,w,h);const L=30,R=w-10,Tp=14,B=h-30,NB=20;
+  const tr=sc==='log'?SK.map(v=>Math.log10(v)):SK;const lo=Math.min(...tr),hi=Math.max(...tr),bw=(hi-lo)/NB;
+  const cnt=Array(NB).fill(0);tr.forEach(v=>cnt[Math.min(NB-1,Math.floor((v-lo)/bw))]++);const mxc=Math.max(...cnt);
+  const bx=(R-L)/NB;cnt.forEach((n,i)=>{const hh=n/mxc*(B-Tp);c.fillStyle=sc==='log'?'#b79cff':'#58c4dc';c.fillRect(L+i*bx+1,B-hh,bx-2,hh);});
+  c.strokeStyle='#3a3f5c';c.beginPath();c.moveTo(L,B);c.lineTo(R,B);c.stroke();
+  const ticks=sc==='log'?[3,3.5,4,4.5]:[0,10000,20000,30000];
+  ticks.forEach(t=>{const x=L+(t-lo)/(hi-lo)*(R-L);if(x>R-14||x<L)return;T(c,sc==='log'?['1천만','3천만','1억','3억'][[3,3.5,4,4.5].indexOf(t)]:t===0?'0':(t/10000)+'억',x,B+12,'#8a8fac',10);c.strokeStyle='#3a3f5c';c.beginPath();c.moveTo(x,B);c.lineTo(x,B+4);c.stroke();});
+  T(c,sc==='log'?'로그 눈금 (한 칸 = 같은 배수)':'원래 눈금 (만 원)',R,Tp-6,'#8a8fac',10,'right');
+  $('#histMsg').innerHTML=sc==='log'?`<div class="say">👓 로그 안경을 썼더니 긴 꼬리가 짧게 눌리고 모양이 <b>대칭(종 모양)</b>에 가까워졌습니다. <b>데이터를 바꾼 것이 아니라 보는 안경을 바꾼 것</b>입니다. 로그는 큰 값일수록 더 많이 줄여 줍니다.</div>`
+    :`<div class="say q">왼쪽에 잔뜩 쌓이고 오른쪽으로 <b>긴 꼬리</b>가 늘어졌습니다. 평균 ${won(mean(SK))} vs 중앙값 ${won(median(SK))}. 이 상태로는 안쪽 구조가 잘 안 보입니다. <b>로그 눈금</b>을 눌러 보세요.</div>`;}
+$$('[data-sc]').forEach(b=>b.onclick=()=>{$$('[data-sc]').forEach(x=>x.classList.toggle('on',x===b));sc=b.dataset.sc;drawHist();});
+
+/* ===== ④ 체크리스트 & 나의 예 ===== */
+const STEPS=[['구조 파악','행이 몇 개, 열이 무엇, 빈칸은 얼마나? (df.info)'],['변수 하나씩','분포와 튀는 값 (그래프 + df.describe)'],['두 변수의 관계','점으로 찍어 보기'],['여러 변수 함께','세 개 이상을 한꺼번에'],['가설 세우기','탐정이 모은 단서 → 판사가 따질 주장']];
+const CK='datadet.chk',MK='datadet.mine';
+const load=(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v;}catch(e){return d;}};
+const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
+let ck=load(CK,[]);if(!Array.isArray(ck))ck=[];
+function drawChk(){$('#chk').innerHTML=STEPS.map(([t,s],i)=>`<label class="${ck[i]?'done':''}"><input type="checkbox" data-i="${i}" ${ck[i]?'checked':''}><span><b>${i+1}. ${t}</b><br><span style="color:#a7abc4">${s}</span></span></label>`).join('');
+  $$('#chk input').forEach(x=>x.onchange=()=>{ck[+x.dataset.i]=x.checked;save(CK,ck);drawChk();if(ck.filter(Boolean).length===5)toast('🕵️ 탐정의 눈 완성!');});}
+$('#chkReset').onclick=()=>{ck=[];save(CK,ck);drawChk();};
+let mine=load(MK,[]);if(!Array.isArray(mine))mine=[];
+function drawMine(){$('#mine').innerHTML=mine.length?mine.map((m,i)=>`<div><span>📰 ${esc(m)} → 중앙값은? 그림은?</span><button data-d="${i}" aria-label="지우기">✕</button></div>`).join(''):'<p class="note">예: 평균 월급, 평균 집값, 평균 자산 기사…</p>';
+  $$('#mine button').forEach(b=>b.onclick=()=>{mine.splice(+b.dataset.d,1);save(MK,mine);drawMine();});}
+$('#myAdd').onclick=()=>{const v=$('#myIn').value.trim();if(!v)return;mine.unshift(v);mine=mine.slice(0,30);save(MK,mine);$('#myIn').value='';drawMine();toast('단서 하나 추가!');};
+$('#myIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#myAdd').click();});
+
+/* ===== 탭 ===== */
+function show(t){$$('.tabs button').forEach(x=>x.classList.toggle('on',x.dataset.tab===t));['t1','t2','t3','t4'].forEach(k=>$('#tab-'+k).hidden=k!==t);
+  if(t==='t2'&&!$('#faces').hidden)drawQuad();if(t==='t3')drawHist();window.scrollTo(0,0);}
+$$('.tabs button').forEach(b=>b.onclick=()=>show(b.dataset.tab));
+window.addEventListener('resize',()=>{if(!$('#tab-t2').hidden&&!$('#faces').hidden)drawQuad();if(!$('#tab-t3').hidden)drawHist();});
+drawTown();sumTable();drawSens();drawChk();drawMine();
+})();
+</script>
+</body>
+</html>
